@@ -157,8 +157,11 @@ export default function InboxScreen() {
 또한 `App` 컴포넌트를 변경하여 `InboxScreen`을 렌더링 합니다. (올바른 화면 선택을 위하여 router를 사용해도 되지만 여기서는 고려하지 않도록 하겠습니다.)
 
 ```diff:title=src/App.jsx
-- import logo from './logo.svg';
-- import './App.css';
+- import { useState } from 'react'
+- import reactLogo from './assets/react.svg'
+- import viteLogo from '/vite.svg'
+- import './App.css'
+
 + import './index.css';
 + import store from './lib/store';
 
@@ -166,22 +169,29 @@ export default function InboxScreen() {
 + import InboxScreen from './components/InboxScreen';
 
 function App() {
+- const [count, setCount] = useState(0)
   return (
 -   <div className="App">
--     <header className="App-header">
--       <img src={logo} className="App-logo" alt="logo" />
--       <p>
--         Edit <code>src/App.jsx</code> and save to reload.
--       </p>
--       <a
--         className="App-link"
--         href="https://reactjs.org"
--         target="_blank"
--         rel="noopener noreferrer"
--       >
--         Learn React
+-     <div>
+-       <a href="https://vitejs.dev" target="_blank">
+-         <img src={viteLogo} className="logo" alt="Vite logo" />
 -       </a>
--     </header>
+-       <a href="https://reactjs.org" target="_blank">
+-         <img src={reactLogo} className="logo react" alt="React logo" />
+-       </a>
+-     </div>
+-     <h1>Vite + React</h1>
+-     <div className="card">
+-       <button onClick={() => setCount((count) => count + 1)}>
+-         count is {count}
+-       </button>
+-       <p>
+-         Edit <code>src/App.jsx</code> and save to test HMR
+-       </p>
+-     </div>
+-     <p className="read-the-docs">
+-       Click on the Vite and React logos to learn more
+-     </p>
 -   </div>
 +   <Provider store={store}>
 +     <InboxScreen />
@@ -191,15 +201,11 @@ function App() {
 export default App;
 ```
 
-<div class="aside">💡 test 파일을 업데이트하는 것을 잊지마세요 <code>src/App.test.js</code>. 그렇지 않으면 테스트에 실패할 수 있습니다.</div>
-
 그러나 여기서 흥미로운 점은 스토리북에서 스토리를 렌더링 할 때입니다.
 
 앞에서 살펴보았듯이 `TaskList` 컴포넌트는 이제 **연결된** 컴포넌트가 되었습니다. 그리고 Redux 저장소에 의존하여 작업을 렌더링하고 있습니다.`InboxScreen` 또한 연결된 컴포넌트 이므로 비슷한 작업을 수행하고 따라서 `InboxScreen.stories.jsx`에서 스토리를 설정할 때에도 스토어를 제공할 수 있습니다.
 
 ```jsx:title=src/components/InboxScreen.stories.jsx
-import React from 'react';
-
 import InboxScreen from './InboxScreen';
 import store from '../lib/store';
 
@@ -209,17 +215,17 @@ export default {
   component: InboxScreen,
   title: 'InboxScreen',
   decorators: [(story) => <Provider store={store}>{story()}</Provider>],
+  tags: ['autodocs'],
 };
 
-const Template = () => <InboxScreen />;
+export const Default = {};
 
-export const Default = Template.bind({});
-export const Error = Template.bind({});
+export const Error = {};
 ```
 
 `error` 스토리에서 문제를 빠르게 찾아 낼 수 있습니다. 올바른 상태를 표시하는 대신 작업 목록을 표시해 줍니다. 이 문제를 피하는 한 가지 방법은 지난 장에서와 유사하게 각 상태에 대해 모의 버전을 제공하는 것이지만, 대신 이 문제를 해결하는데 도움이 되도록 잘 알려진 API mocking 라이브러리를 스토리북 애드온과 함께 사용합니다.
 
-![고장난 inbox 스크린 상태](/intro-to-storybook/broken-inbox-error-state-optimized.png)
+![고장난 inbox 스크린 상태](/intro-to-storybook/broken-inbox-error-state-7-0-optimized.png)
 
 ## 모의 API 서비스
 
@@ -233,78 +239,79 @@ export const Error = Template.bind({});
 yarn init-msw
 ```
 
-그러면, 이후 `.storybook/preview.js` 를 업데이트 하고 초기화해야 합니다.
+그러면, 이후 `.storybook/preview.js` 를 업데이트 하고 초기화해야 합니다:
 
 ```diff:title=.storybook/preview.js
 import '../src/index.css';
 
-+ // Registers the msw addon
-+ import { initialize, mswDecorator } from 'msw-storybook-addon';
+// Registers the msw addon
++ import { initialize, mswLoader } from 'msw-storybook-addon';
 
-+ // Initialize MSW
+// Initialize MSW
 + initialize();
 
-+ // Provide the MSW addon decorator globally
-+ export const decorators = [mswDecorator];
-
 //👇 Configures Storybook to log the actions( onArchiveTask and onPinTask ) in the UI.
-export const parameters = {
-  actions: { argTypesRegex: '^on[A-Z].*' },
-  controls: {
-    matchers: {
-      color: /(background|color)$/i,
-      date: /Date$/,
+/** @type { import('@storybook/react').Preview } */
+const preview = {
+  parameters: {
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/,
+      },
     },
   },
++ loaders: [mswLoader],
 };
+
+export default preview;
 ```
 
-마지막으로 `InboxScreen` 스토리를 업데이트하고 모의 원격 API 호출 파라미터를 [parameter](https://storybook.js.org/docs/react/writing-stories/parameters) 포함합니다.
+마지막으로 `InboxScreen` 스토리를 업데이트하고 모의 원격 API 호출 파라미터를 [parameter](https://storybook.js.org/docs/writing-stories/parameters) 포함합니다.
 
 ```diff:title=src/components/InboxScreen.stories.jsx
-import React from 'react';
-
 import InboxScreen from './InboxScreen';
+
 import store from '../lib/store';
-+ import { rest } from 'msw';
+
++ import { http, HttpResponse } from 'msw';
+
 + import { MockedState } from './TaskList.stories';
+
 import { Provider } from 'react-redux';
 
 export default {
   component: InboxScreen,
   title: 'InboxScreen',
   decorators: [(story) => <Provider store={store}>{story()}</Provider>],
+  tags: ['autodocs'],
 };
 
-const Template = () => <InboxScreen />;
-
-export const Default = Template.bind({});
-+ Default.parameters = {
+export const Default = {
++ parameters: {
 +   msw: {
 +     handlers: [
-+       rest.get(
-+         'https://jsonplaceholder.typicode.com/todos?userId=1',
-+         (req, res, ctx) => {
-+           return res(ctx.json(MockedState.tasks));
-+         }
-+       ),
++       http.get('https://jsonplaceholder.typicode.com/todos?userId=1', () => {
++         return HttpResponse.json(MockedState.tasks);
++       }),
 +     ],
 +   },
-+ };
++ },
+};
 
-export const Error = Template.bind({});
-+ Error.parameters = {
+export const Error = {
++ parameters: {
 +   msw: {
 +     handlers: [
-+       rest.get(
-+         'https://jsonplaceholder.typicode.com/todos?userId=1',
-+         (req, res, ctx) => {
-+           return res(ctx.status(403));
-+         }
-+       ),
++       http.get('https://jsonplaceholder.typicode.com/todos?userId=1', () => {
++         return new HttpResponse(null, {
++           status: 403,
++         });
++       }),
 +     ],
 +   },
-+ };
++ },
+};
 ```
 
 <div class="aside">
@@ -315,63 +322,60 @@ export const Error = Template.bind({});
 
 <video autoPlay muted playsInline loop>
   <source
-    src="/intro-to-storybook/inbox-screen-with-working-msw-addon-optimized.mp4"
+    src="/intro-to-storybook/inbox-screen-with-working-msw-addon-optimized-7.0.mp4"
     type="video/mp4"
   />
 </video>
 
-## 인터랙티브 스토리
+## 컴포넌트 테스트
 
-지금까지 간단한 구성 요소에서 시작하여 화면에 이르기까지 완전히 작동하는 응용 프로그램을 처음부터 구축하고 스토리를 사용하여 각 변경 사항을 지속적으로 테스트할 수 있었습니다. 그러나 각각의 새로운 스토리는 UI가 깨지지 않도록 다른 모든 스토리를 수동으로 확인해야 합니다. 그것은 많은 추가 작업입니다.
+지금까지 우리는 간단한 컴포넌트에서 시작하여 화면까지 스토리를 사용해 각 변경 사항을 지속적으로 테스트하면서 기능을 갖는 애플리케이션을 처음부터 구축할 수 있었습니다. 하지만 각 새로운 스토리는 UI가 깨지지 않도록 다른 모든 스토리를 수동으로 확인해야 합니다. 이는 많은 추가 작업이 필요합니다.
 
-이 워크플로우를 자동화하고 구성요소와 자동으로 상호 작용할 수 없을까요?
+이 워크플로우를 자동화하고 구성 요소 간 상호 작용을 자동으로 테스트 할 수는 없을까요?
 
-스토리북의 [`play`](https://storybook.js.org/docs/react/writing-stories/play-function) 기능을 사용하면 그렇게 할 수있습니다.재생 기능에는 스토리가 렌더링된 후 실행되는 작은 코드 스니펫이 포함됩니다.
+## play 함수를 사용해서 컴포넌트 테스트를 작성하세요
+스토리북의 [`play`](https://storybook.js.org/docs/writing-stories/play-function) 와 [`@storybook/addon-interactions`](https://storybook.js.org/docs/writing-tests/component-testing) 가 그것을 도울 수 있습니다. play 함수에는 스토리가 렌더링된 후 실행되는 작은 코드 조각이 포함됩니다.
 
-play 기능은 UI가 업데이트 될 때 어떤 일이 발생하는지 확인하는 데 도움이 됩니다. 이 기능은 프레임워크에 구애박지 않는 DOM API 를 사용합니다. 따라서 play 기능을 사용하면 프레임워크에 구애받지 않고 UI에 인터랙트 하고 사용자의 동작을 시뮬레이션 할 수있습니다.
+play 함수는 작업이 업데이트될 때 UI에 무슨 일이 일어나는지 확인하는 데 도움이 됩니다. 프레임워크에 독립적인 DOM API를 사용하므로 스토리를 작성하여 프론트엔드 프레임워크와 상관없이 UI와 상호 작용하고 인간의 행동을 시뮬레이션할 수 있습니다.
 
-그럼 이제 실행해 봅시다. 새로만든 `InboxScreen` 스토리를 업데이트하고 다음을 추가하여 컴포넌트 상호작용을 추가해 봅시다.
+실제로 확인해 봅시다! 새로 만든 `InboxScreen` 스토리를 업데이트하고, 컴포넌트 상호작용을 다음과 같이 설정하세요:
 
 ```diff:title=src/components/InboxScreen.stories.jsx
-import React from 'react';
-
 import InboxScreen from './InboxScreen';
 
 import store from '../lib/store';
-import { rest } from 'msw';
+
+import { http, HttpResponse } from 'msw';
+
 import { MockedState } from './TaskList.stories';
+
 import { Provider } from 'react-redux';
 
 + import {
 +  fireEvent,
-+  within,
 +  waitFor,
++  within,
 +  waitForElementToBeRemoved
-+ } from '@storybook/testing-library';
++ } from '@storybook/test';
 
 export default {
   component: InboxScreen,
   title: 'InboxScreen',
   decorators: [(story) => <Provider store={store}>{story()}</Provider>],
+  tags: ['autodocs'],
 };
 
-const Template = () => <InboxScreen />;
-
-export const Default = Template.bind({});
-Default.parameters = {
-  msw: {
-    handlers: [
-      rest.get(
-        'https://jsonplaceholder.typicode.com/todos?userId=1',
-        (req, res, ctx) => {
-          return res(ctx.json(MockedState.tasks));
-        }
-      ),
-    ],
+export const Default = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('https://jsonplaceholder.typicode.com/todos?userId=1', () => {
+          return HttpResponse.json(MockedState.tasks);
+        }),
+      ],
+    },
   },
-};
-
-+ Default.play = async ({ canvasElement }) => {
++ play: async ({ canvasElement }) => {
 +   const canvas = within(canvasElement);
 +   // Waits for the component to transition from the loading state
 +   await waitForElementToBeRemoved(await canvas.findByTestId('loading'));
@@ -382,23 +386,84 @@ Default.parameters = {
 +     // Simulates pinning the third task
 +     await fireEvent.click(canvas.getByLabelText('pinTask-3'));
 +   });
-+ };
++ },
+};
+
+export const Error = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('https://jsonplaceholder.typicode.com/todos?userId=1', () => {
+          return new HttpResponse(null, {
+            status: 403,
+          });
+        }),
+      ],
+    },
+  },
+};
 ```
 
-새로 생성된 스토리를 확인하고, `Interaction` 패널을 클릭하여 스토리 재생 기능 내부의 상호작용 목록을 확인하세요
+<div class="aside">
+
+💡 `@storybook/test` 패키지는 `@storybook/jest` 과 `@storybook/testing-library` 테스트 패키지를 대체하고, [Vitest](https://vitest.dev/)를 기반으로 더 작은 번들 사이즈와 더 간단한 API를 제공합니다.
+
+</div>
+
+`Default` 스토리를 확인하세요. 스토리의 play 함수 안에 있는 상호작용 리스트를 확인하기 위해 `Interactions` 판넬을 클릭해보세요.
 
 <video autoPlay muted playsInline loop>
   <source
-    src="/intro-to-storybook/storybook-interactive-stories-play-function-6-4.mp4"
+    src="/intro-to-storybook/storybook-interactive-stories-play-function-7-0.mp4"
     type="video/mp4"
   />
 </video>
 
-play 기능을 사용하면 작업을 업데이트 한 후 UI 가 어떻게 상호작용하고 응답하는지 빠르게 확인 할 수 있습니다. 추가 작업 없이 UI를 일관되게 유지할 수있으며 테스트 환경을 가동하거나 추가 패키지를 추가할 필요가 없습니다.
+## 테스트 러너를 사용하여 테스트 자동화
+
+Storybook의 play 기능을 사용하여 우리는 문제를 피할 수 있었고, UI와 상호 작용하여 작업을 업데이트할 때 UI가 어떻게 반응하는지 빠르게 확인할 수 있었습니다. 즉, 별도의 수작업 없이 UI의 일관성을 유지할 수 있었습니다.
+
+하지만, Storybook을 자세히 살펴보면 스토리를 볼 때만 상호 작용 테스트를 실행한다는 것을 알 수 있습니다. 따라서 변경을 하면 모든 테스트를 실행하기 위해 각 스토리를 살펴봐야 합니다. 흠, 자동화 할 수 없을까요?
+
+좋은 소식은 가능하다는 것입니다! Storybook의 [테스트 러너](https://storybook.js.org/docs/writing-tests/test-runner)가 이를 가능하게 만듭니다. 이것은 [Playwright](https://playwright.dev/)에서 제공하는 독립형 유틸리티입니다-모든 상호 작용 테스트를 실행하고 깨진 스토리를 포착합니다.
+
+어떻게 동작하는지 확인해봅시다! 다음 명령을 실행해 설치하세요:
+
+```shell
+yarn add --dev @storybook/test-runner
+```
+
+다음으로 `package.json` `scripts` 를 업데이트하고 새로운 테스트 작업을 추가하세요:
+
+```json:clipboard=false
+{
+  "scripts": {
+    "test-storybook": "test-storybook"
+  }
+}
+```
+
+마지막으로, Storybook을 실행시킨 상태에서, 새 터미널 창을 열고 다음 명령어를 실행하세요:
+
+```shell
+yarn test-storybook --watch
+```
+
+<div class="aside">
+
+💡 play 기능을 사용한 컴포넌트 테스팅은 UI 컴포넌트를 테스트하는 환상적인 방법입니다. 여기서 본 것 보다 훨씬 더 많은 일을 할 수 있습니다. 이에 대해 자세히 알아보려면 [공식 문서](https://storybook.js.org/docs/writing-tests/component-testing)를 읽어보는 것이 좋습니다.
+
+더 깊이 있는 테스트 설명이 필요하다면 [테스팅 핸드북](/ui-testing-handbook)을 참고해보세요. 확장 가능한 프론트엔드 팀들이 개발 워크플로를 강화하기 위해 사용하는 테스트 전략을 다루고 있습니다.
+
+</div>
+
+![Storybook test runner successfully runs all tests](/intro-to-storybook/storybook-test-runner-execution.png)
+
+성공했습니다! 이제 모든 스토리가 오류 없이 렌더링되는지와 모든 검증이 자동으로 통과되는지 확인할 수 있는 도구가 생겼습니다. 더 나아가, 테스트가 실패할 경우 실패한 스토리를 브라우저에서 바로 열 수 있는 링크도 제공됩니다.
 
 ## 컴포넌트 주도 개발
 
-처음 `Task` 에서 시작하여 `TaskList`로 진행 해 보았습니다. 이제 전체 화면 UI를 다룰 수 있습니다. 우리의 `InboxScreen` 은 연결된 컴포넌트들을 포함하며 스토리를 포함하고 있습니다.
+처음에는 `Task`부터 시작해 `TaskList`로 나아갔고, 이제는 전체 화면 UI까지 도달했습니다. 우리의 `InboxScreen`은 연결된 컴포넌트들을 포함하며, 이에 맞는 스토리도 포함하고 있습니다.
 
 <video autoPlay muted playsInline loop style="width:480px; height:auto; margin: 0 auto;">
   <source
