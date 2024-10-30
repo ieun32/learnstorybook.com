@@ -45,7 +45,7 @@ yarn dev
 
 프런트엔드 앱의 세 가지 양식: 자동화된 테스트(Jest), 컴포넌트 개발(Storybook), 앱 자체 개발이 있습니다.
 
-![3가지 양식](https://storybook.js.org/tutorials/intro-to-storybook/app-three-modalities.png)
+![3가지 양식](/intro-to-storybook/app-main-modalities-react.png)
 
 여러분이 앱(응용 프로그램)의 어떤 부분에 따라 작업하고 있는지에 따라, 이것들 중 하나 이상을 동시에 실행하고 싶을 수 있습니다. 하지만 지금 우리의 초점은 단일 UI 구성 요소를 만드는 것이므로 스토리북을 실행하는데 집중할 것입니다.
 
