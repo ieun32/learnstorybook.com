@@ -107,7 +107,7 @@ jobs:
 
 <div class="aside"><p>간단하게 진행하고자 <a href="https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets">GitHub secrets</a> 은 언급되지 않았습니다. 이는 깃허브에서 제공하는 안전한 환경 변수이며 이를 사용하면 <code>project-token</code>을 직접 입력할 필요가 없습니다.</p></div>
 
-### 깃허브 액션 커밋하기
+### 깃허브 작업 커밋하기
 
 다음의 명령어를 실행하여 변경된 사항을 추가해주세요.
 
@@ -127,7 +127,7 @@ git commit -m "GitHub action setup"
 git push origin main
 ```
 
-깃허브 action을 설정하면 코드를 push할 때마다 스토리북이 크로마틱에 배포될 것입니다. 크로마틱의 프로젝트 빌드 화면에서 배포된 모든 스토리북을 보실 수 있습니다.
+깃허브 작업을 설정하면 코드를 push할 때마다 스토리북이 크로마틱에 배포될 것입니다. 크로마틱의 프로젝트 빌드 화면에서 배포된 모든 스토리북을 보실 수 있습니다.
 
 ![크로마틱 사용자 대시보드](/intro-to-storybook/chromatic-user-dashboard.png)
 
